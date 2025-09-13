@@ -9,7 +9,7 @@ using namespace Pseudorandom_numbers;
 
 int main() {
     const int n = 20000;        // Кол-во случайных чисел
-    const int m = 30;           // Кол-во разбиений (20-50)
+    const int m = 31;           // Кол-во разбиений (20-50)
     vector <int> split (m, 0);  // Сумма чисел по секторам
 
     //! Начальное условие
@@ -18,25 +18,32 @@ int main() {
     Rundom::set_m(10000000);
     
     //> Генерация ряда случайных чисел
+    FILE* file_nombers = fopen("Output/numbers.scv", "w");
+    if (!file_nombers) {
+        cout << "File opening error!" << endl;
+        return 0;
+    }
     for (int i = 0; i < n; i++) {
         long long rund = Rundom::creat_rundom_number(); //? start: 798451
         double u = double(rund / pow(10, int(log10(rund) + 1)));
         split[int((u - 0.1) / 0.9 * m)]++;
+        fprintf(file_nombers, "%8d    ", rund);
+        if ((i + 1) % 7 == 0) fprintf(file_nombers, "\n");
     }
 
     //> Распределение чисел
     int const w = n/m;
-    FILE* file = fopen("sectors.scv", "w");
-    if (!file) {
+    FILE* file_sectors = fopen("Output/sectors.scv", "w");
+    if (!file_sectors) {
         cout << "File opening error!" << endl;
         return 0;
     }
 
     cout << endl << "Sums in segments: " << endl;
-    fprintf(file, "Промежуток; Экспериментальные значения; Теоретические значения\n");
+    fprintf(file_sectors, "Промежуток; Экспериментальные значения; Теоретические значения\n");
     for (int i = 0; i < m; i++) {
         printf("%3d: %d;    ", i+1, split[i]);
-        fprintf(file, "%1.4f; %d; %d\n", double(i)/m, split[i], w);
+        fprintf(file_sectors, "%1.4f; %d; %d\n", double(i)/m, split[i], w);
         if ((i+1) % 4 == 0) cout << endl;
     }
 
@@ -51,7 +58,10 @@ int main() {
         if ((i+1) % 4 == 0) cout << endl;
     }
 
-    fclose(file);
-    cout << endl << "Pearson criterion: " << pearson << endl;
+    cout << endl << "Pearson criterion: " << pearson << endl << "Probability: ";
+    system(("py Scripts/get_probability.py " + to_string(pearson) + " " + to_string(m-1)).c_str());
+
+    fclose(file_sectors);
+    fclose(file_nombers);
     return 0;
 }
